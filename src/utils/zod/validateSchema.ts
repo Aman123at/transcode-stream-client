@@ -35,7 +35,7 @@ export const validUserInput = <T>(zodSchema: ZodSchema, userInput: T): Validatio
         console.log("Validation error:", error.flatten());
         if(error instanceof ZodError){
             const extractedError = error.flatten()
-            const fieldError = (extractedError && extractedError.hasOwnProperty("fieldErrors")) ? extractedError.fieldErrors : extractedError;
+            const fieldError:any = (extractedError && extractedError.hasOwnProperty("fieldErrors")) ? extractedError.fieldErrors : extractedError;
             console.log("FIELDERROR>>",fieldError)
             return { success: false, error: fieldError  };
         }else{
