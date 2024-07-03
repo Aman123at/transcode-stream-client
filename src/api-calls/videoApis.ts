@@ -18,7 +18,6 @@ export const getPresignedURL = async (formData: any) => {
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 };
@@ -35,9 +34,6 @@ export const uploadVideoToPresignedURL = async (
       },
     });
     if (result && result.status && result.statusText === "OK") {
-      //   const resData = result.data;
-      console.log("REsult", result);
-
       return "success";
     } else {
       return null;
@@ -56,7 +52,6 @@ export const uploadOnSuccess = async (videoFileName: string) => {
       { withCredentials: true }
     );
     if (result && result.status) {
-      console.log("Upload scussess", result);
       const resData = result.data;
       return { data: resData, error: null };
     } else {
@@ -66,7 +61,6 @@ export const uploadOnSuccess = async (videoFileName: string) => {
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 };
@@ -77,7 +71,6 @@ export const fetchAllVideos = async () => {
       withCredentials: true,
     });
     if (result && result.status) {
-      console.log("Video fetched success", result);
       const resData = result.data;
       return { data: resData, error: null };
     } else {
@@ -87,7 +80,6 @@ export const fetchAllVideos = async () => {
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 };
@@ -98,7 +90,6 @@ export const pollVideosQueue = async () => {
       withCredentials: true,
     });
     if (result && result.status) {
-      console.log("Data from queue", result);
       const resData = result.data;
       return { data: resData, error: null };
     } else {
@@ -108,7 +99,6 @@ export const pollVideosQueue = async () => {
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 };
@@ -120,7 +110,6 @@ export const retrieveTranscodeLogs = async (transcodeId:string)=>{
       withCredentials: true,
     });
     if (result && result.status) {
-      console.log("Logs data", result);
       const resData = result.data;
       return { data: resData, error: null };
     } else {
@@ -130,7 +119,6 @@ export const retrieveTranscodeLogs = async (transcodeId:string)=>{
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 }
@@ -151,11 +139,12 @@ export const getMasterM3U8URL = async (transcodeId:string)=>{
       };
     }
   } catch (error) {
-    console.log(error);
     return { data: null, error };
   }
 }
-export const downloadVideo = async (transcodeId:string,videoKey:string)=>{
+export const downloadVideo = async (transcodeId:string,videoKey:string,setGlobalLoader:Function,showErrorFromServer:Function,setIsDownloadingVideo:Function)=>{
+  setIsDownloadingVideo(true)
+  setGlobalLoader(true)
   try {
      const response = await axios.post(`${API_BASE_URL}/video/download/${transcodeId}`,{videoKey},
       {
@@ -170,8 +159,13 @@ export const downloadVideo = async (transcodeId:string,videoKey:string)=>{
       const blob = new Blob([response.data], { type: 'application/zip' });
       // Use file-saver to save the file
       saveAs(blob, `${videoKey.split('.').join('__')}.zip`);
+      setIsDownloadingVideo(false)
+      setGlobalLoader(false)
   } catch (error) {
     console.log("ERROR DOWNLOADING VIDEO",error);
+    setIsDownloadingVideo(false)
+    setGlobalLoader(false)
+    showErrorFromServer(error)
   }
 }
 
@@ -193,7 +187,7 @@ export const deleteVideo = async (transcodeId:string)=>{
         };
       }
   } catch (error) {
-    console.log("ERROR DOWNLOADING VIDEO",error);
+    console.log("ERROR DELETING VIDEO",error);
     return { data: null, error };
   }
 }

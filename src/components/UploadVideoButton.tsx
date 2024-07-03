@@ -5,40 +5,64 @@ import {
   uploadVideoToPresignedURL,
 } from "../api-calls/videoApis";
 import { useVideoContext } from "../context/VideoContextProvider";
+import { useCommonContext } from "../context/CommonContextProvider";
 
 const UploadVideoButton: FC<{ isDashboardPage?: boolean }> = ({
   isDashboardPage,
 }) => {
   const { setVideos, videos } = useVideoContext();
+  const {
+    setGlobalLoader,
+    showErrorFromServer,
+    showToast,
+    setIsUploadingVideo,
+  } = useCommonContext();
   const handleUploadVideoFile = async (event: any) => {
     if (event.target.files) {
       const video = event.target.files[0];
-      console.log(video);
       const formData = new FormData();
       formData.append("video", video);
+      setIsUploadingVideo(true);
+      setGlobalLoader(true);
       const { data, error } = await getPresignedURL(formData);
       if (error) {
         console.log("Something went wrong getting presigned url", error);
+        setIsUploadingVideo(false);
+        setGlobalLoader(false);
+        showErrorFromServer(error);
       }
       if (data && data.url) {
-        console.log("Presigned", data.url);
         try {
-          const response = await uploadVideoToPresignedURL(data.url, video,video.type);
+          const response = await uploadVideoToPresignedURL(
+            data.url,
+            video,
+            video.type
+          );
           if (response && response === "success") {
             const { data, error } = await uploadOnSuccess(video.name);
             if (data) {
-              console.log("Success", data);
               const uploadedVideo = data.video;
               setVideos!([...videos, uploadedVideo]);
+              setIsUploadingVideo(false);
+              setGlobalLoader(false);
             }
             if (error) {
               console.log("Error", error);
+              setIsUploadingVideo(false);
+              setGlobalLoader(false);
+              showErrorFromServer(error);
             }
           } else {
             console.log("Something went wrong while uploading video");
+            setIsUploadingVideo(false);
+            setGlobalLoader(false);
+            showToast("error", "Unable to upload video on presigned url");
           }
         } catch (error) {
           console.log("ErRRor", error);
+          setIsUploadingVideo(false);
+          setGlobalLoader(false);
+          showErrorFromServer(error);
         }
       }
     }

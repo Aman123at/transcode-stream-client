@@ -59,7 +59,7 @@ export const signIn = async (signinPayload: ISignInPayload) => {
     );
 
     return { response, error: null };
-  } catch (error) {
+  } catch (error:any) {
     console.log("Unable to signin user : ", error);
 
     return { response: null, error };

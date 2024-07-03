@@ -45,7 +45,7 @@ const VideoPlayer: React.FC<any> = (props:any) => {
     
 
   return (
-    <div data-vjs-player>
+    <div className='ml-2' data-vjs-player>
       <div ref={videoRef} />
     </div>
   );

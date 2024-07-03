@@ -14,10 +14,12 @@ import {
 import { useAuthContext } from "../context/AuthContextProvider";
 import { useNavigate } from "react-router-dom";
 import { signIn, signUp } from "../api-calls/authApis";
+import { useCommonContext } from "../context/CommonContextProvider";
 
 const AuthPage: FC = () => {
   const { user, fetchLoggedInUser } = useAuthContext();
   const navigate = useNavigate();
+  const {setGlobalLoader,showErrorFromServer} = useCommonContext()
   useEffect(() => {
     if (user && user.hasOwnProperty("_id")) {
       navigate("/dashboard");
@@ -64,10 +66,8 @@ const AuthPage: FC = () => {
         password: signupData.password,
       });
       if (typeof error === "object" && !success) {
-        // alert("Some error");
         if (typeof error === "object") {
           const fieldErrorObj = convertFieldErrorsToString(error!);
-          console.log("ERROR:>>", error, fieldErrorObj);
           if (fieldErrorObj) {
             setSignupErrorData({
               ...signupErrorData,
@@ -85,6 +85,7 @@ const AuthPage: FC = () => {
         }
       } else {
         // signUpUser();
+        setGlobalLoader(true)
         const { response, error } = await signUp({
           email: signupData.email,
           username: signupData.username,
@@ -92,9 +93,11 @@ const AuthPage: FC = () => {
         });
         if (error) {
           console.log("Something went wrong while sign up", error);
+          setGlobalLoader(false)
+          showErrorFromServer(error)
         }
         if (response && response.status) {
-          console.log("User signed up successfully", response);
+          setGlobalLoader(false)
           fetchLoggedInUser!();
         }
       }
@@ -111,7 +114,6 @@ const AuthPage: FC = () => {
     if (typeof error === "object" && !success) {
       if (typeof error === "object") {
         const fieldErrorObj = convertFieldErrorsToString(error!);
-        console.log("ERROR:>>", error, fieldErrorObj);
         if (fieldErrorObj) {
           setSigninErrorData({
             ...signinErrorData,
@@ -126,15 +128,18 @@ const AuthPage: FC = () => {
       }
     } else {
       //   signInUser();
+      setGlobalLoader(true)
       const { response, error } = await signIn({
         email: signinData.email,
         password: signinData.password,
       });
       if (error) {
         console.log("Something went wrong while sign in", error);
-      }
-      if (response && response.status) {
-        console.log("User signed in successfully", response);
+        setGlobalLoader(false)
+        showErrorFromServer(error)
+        }
+        if (response && response.status) {
+        setGlobalLoader(false)
         fetchLoggedInUser!();
       }
     }

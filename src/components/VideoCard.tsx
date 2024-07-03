@@ -3,29 +3,36 @@ import { useVideoContext } from "../context/VideoContextProvider";
 import { Video } from "../interfaces-ts/videoInterfaces";
 import { deleteVideo, downloadVideo, retrieveTranscodeLogs } from "../api-calls/videoApis";
 import { formatDuration, getStatusColor, truncateText } from "../utils/helper";
+import { useCommonContext } from "../context/CommonContextProvider";
 
 const VideoCard = ({ video }: { video: Video }) => {
   const { selectedVideo, setSelectedVideo, fetchVideos } = useVideoContext();
+  const {setGlobalLoader,showErrorFromServer,setIsDownloadingVideo} = useCommonContext()
   const handleDownload = async (e:SyntheticEvent)=>{
     e.stopPropagation()   // preventation of event bubbling
-    await downloadVideo(video.transcode_id,video.video_file_name)
+    await downloadVideo(video.transcode_id,video.video_file_name,setGlobalLoader,showErrorFromServer,setIsDownloadingVideo)
   }
   const handleDeleteVideo = async (e:SyntheticEvent)=>{
     e.stopPropagation()   // preventation of event bubbling
+    setGlobalLoader(true)
     const {data,error} = await deleteVideo(video.transcode_id)
     if(error){
       console.log("Something went wrong while deleting video",error)
+      setGlobalLoader(false)
+      showErrorFromServer(error)
     }
     if(data){
-      console.log("Video deleted successfully")
+      setGlobalLoader(false)
       fetchVideos!()
     }
   }
+  
   useEffect(() => {
     if (
       video &&
       (video.status === "queued" || video.status === "in-progress")
     ) {
+      let tempStatus = video.status
       // poll for logs
       const interval = setInterval(async () => {
         const { data, error } = await retrieveTranscodeLogs(video.transcode_id);
@@ -34,13 +41,18 @@ const VideoCard = ({ video }: { video: Video }) => {
         }
         if (data) {
           const { current_status } = data;
-          if (current_status === "active" || current_status === "error") {
-            fetchVideos!();
-            clearInterval(interval);
-          }
-          if (video.status !== current_status) {
-            // fetch updated videos
-            fetchVideos!();
+          if(current_status){
+
+            if (current_status === "active" || current_status === "error") {
+              tempStatus = ""
+              clearInterval(interval);
+            }
+            if (tempStatus !== current_status) {
+              tempStatus = current_status
+              
+              // fetch updated videos
+              fetchVideos!();
+            }
           }
         }
       }, 10000);
@@ -94,7 +106,7 @@ const VideoCard = ({ video }: { video: Video }) => {
             </svg>
 
             <span className="text-sm ml-1 text-black dark:text-white">
-              {formatDuration(video.video_duration)}
+              {(video.status==="queued" || video.status==="in-progress") ? "calculating..." : formatDuration(video.video_duration)}
             </span>
           </p>
           <p className="mt-2 flex items-center ml-5">

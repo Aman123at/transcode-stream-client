@@ -28,15 +28,15 @@ interface ValidationResult<T> {
 
 export const validUserInput = <T>(zodSchema: ZodSchema, userInput: T): ValidationResult<T> => {
     try {
-        const validatedData = zodSchema.parse(userInput);
-        console.log("Valid input:", validatedData);
+        zodSchema.parse(userInput);
+        
         return { success: true, error: null };
     } catch (error:any) {
-        console.log("Validation error:", error.flatten());
+        
         if(error instanceof ZodError){
             const extractedError = error.flatten()
             const fieldError:any = (extractedError && extractedError.hasOwnProperty("fieldErrors")) ? extractedError.fieldErrors : extractedError;
-            console.log("FIELDERROR>>",fieldError)
+            
             return { success: false, error: fieldError  };
         }else{
 
